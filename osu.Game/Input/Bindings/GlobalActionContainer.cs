@@ -129,6 +129,8 @@ namespace osu.Game.Input.Bindings
         }
     }
 
+    // Please add new entries to the END of this enum, otherwise existing
+    // keybind settings will get invalidated.
     public enum GlobalAction
     {
         [Description("Toggle chat overlay")]
@@ -158,7 +160,6 @@ namespace osu.Game.Input.Bindings
         [Description("Toggle mute")]
         ToggleMute,
 
-        // In-Game Keybindings
         [Description("Skip cutscene")]
         SkipCutscene,
 
@@ -186,7 +187,6 @@ namespace osu.Game.Input.Bindings
         [Description("Quick exit (hold)")]
         QuickExit,
 
-        // Game-wide beatmap music controller keybindings
         [Description("Next track")]
         MusicNext,
 
@@ -214,7 +214,6 @@ namespace osu.Game.Input.Bindings
         [Description("Pause gameplay")]
         PauseGameplay,
 
-        // Editor
         [Description("Setup mode")]
         EditorSetupMode,
 
@@ -239,7 +238,6 @@ namespace osu.Game.Input.Bindings
         [Description("Toggle in-game interface")]
         ToggleInGameInterface,
 
-        // Song select keybindings
         [Description("Toggle Mod Select")]
         ToggleModSelection,
 
