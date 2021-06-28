@@ -14,6 +14,7 @@ using osu.Game.Beatmaps.Timing;
 using osu.Game.Rulesets.Edit;
 using osu.Game.Rulesets.Objects;
 using osu.Game.Skinning;
+using osu.Game.Utils;
 
 namespace osu.Game.Screens.Edit
 {
@@ -44,6 +45,16 @@ namespace osu.Game.Screens.Edit
         /// </summary>
         public readonly Bindable<HitObject> PlacementObject = new Bindable<HitObject>();
 
+        /// <summary>
+        /// Invoked when a <see cref="Bookmark"/> is added to this <see cref="EditorBeatmap"/>.
+        /// </summary>
+        public event Action<Bookmark> BookmarkAdded;
+
+        /// <summary>
+        /// Invoked when a <see cref="Bookmark"/> is removed from this <see cref="EditorBeatmap"/>.
+        /// </summary>
+        public event Action<Bookmark> BookmarkRemoved;
+
         public readonly IBeatmap PlayableBeatmap;
 
         [CanBeNull]
@@ -60,6 +71,7 @@ namespace osu.Game.Screens.Edit
         {
             PlayableBeatmap = playableBeatmap;
             BeatmapSkin = beatmapSkin;
+            bookmarks = new BalancedTree<Bookmark>(PlayableBeatmap.BeatmapInfo.Bookmarks.Select(time => new Bookmark(time)));
 
             beatmapProcessor = playableBeatmap.BeatmapInfo.Ruleset?.CreateInstance().CreateBeatmapProcessor(PlayableBeatmap);
 
@@ -95,11 +107,78 @@ namespace osu.Game.Screens.Edit
 
         private IList mutableHitObjects => (IList)PlayableBeatmap.HitObjects;
 
+        private BalancedTree<Bookmark> bookmarks;
+
+        private readonly List<Bookmark> batchPendingBookmarkInserts = new List<Bookmark>();
+
+        private readonly List<Bookmark> batchPendingBookmarkDeletes = new List<Bookmark>();
+
         private readonly List<HitObject> batchPendingInserts = new List<HitObject>();
 
         private readonly List<HitObject> batchPendingDeletes = new List<HitObject>();
 
         private readonly HashSet<HitObject> batchPendingUpdates = new HashSet<HitObject>();
+
+        /// <summary>
+        /// Adds a <see cref="Bookmark"/> to this <see cref="EditorBeatmap"/>.
+        /// </summary>
+        public void AddBookmark(Bookmark bookmark)
+        {
+            bookmarks.Add(bookmark);
+
+            BeginChange();
+            batchPendingBookmarkInserts.Add(bookmark);
+            EndChange();
+        }
+
+        /// <summary>
+        /// Removes a <see cref="Bookmark"/> to this <see cref="EditorBeatmap"/>.
+        /// </summary>
+        public void RemoveBookmark(Bookmark bookmark)
+        {
+            bookmarks.Remove(bookmark);
+
+            BeginChange();
+            batchPendingBookmarkDeletes.Add(bookmark);
+            EndChange();
+        }
+
+        /// <summary>
+        /// Removes the nearest <see cref="Bookmark"/> (within <paramref name="treshold"/> seconds) to <paramref name="time"/>
+        /// </summary>
+        public void RemoveNearestBookmark(double time, double treshold)
+        {
+            Bookmark bookmark = findNearestBookmark(time, treshold);
+            if (bookmark != null)
+            {
+                RemoveBookmark(bookmark);
+            }
+        }
+
+        public bool HasBookmarkNear(double time, double treshold)
+        {
+            Bookmark bookmark = findNearestBookmark(time, treshold);
+            return bookmark != null;
+        }
+
+        private Bookmark findNearestBookmark(double time)
+        {
+            Bookmark nearest;
+            // FIXME: This wastes an allocation for no reason
+            if (!bookmarks.FindNearest(new Bookmark(time), out nearest))
+                return null;
+            return nearest;
+        }
+        private Bookmark findNearestBookmark(double time, double treshold)
+        {
+            Bookmark bookmark = findNearestBookmark(time);
+            if (bookmark == null)
+                return null;
+            double distance = Math.Abs(bookmark.TimePoint - time);
+            if (distance > treshold)
+                return null;
+            return bookmark;
+        }
 
         /// <summary>
         /// Perform the provided action on every selected hitobject.
@@ -242,7 +321,7 @@ namespace osu.Game.Screens.Edit
 
         protected override void UpdateState()
         {
-            if (batchPendingUpdates.Count == 0 && batchPendingDeletes.Count == 0 && batchPendingInserts.Count == 0)
+            if (batchPendingUpdates.Count == 0 && batchPendingDeletes.Count == 0 && batchPendingInserts.Count == 0 && batchPendingBookmarkDeletes.Count == 0 && batchPendingBookmarkInserts.Count == 0)
                 return;
 
             beatmapProcessor?.PreProcess();
@@ -263,9 +342,30 @@ namespace osu.Game.Screens.Edit
             var updates = batchPendingUpdates.ToArray();
             batchPendingUpdates.Clear();
 
+            var bookmarkDeletes = batchPendingBookmarkDeletes.ToArray();
+            batchPendingBookmarkDeletes.Clear();
+
+            var bookmarkInserts = batchPendingBookmarkInserts.ToArray();
+            batchPendingBookmarkInserts.Clear();
+
             foreach (var h in deletes) HitObjectRemoved?.Invoke(h);
             foreach (var h in inserts) HitObjectAdded?.Invoke(h);
             foreach (var h in updates) HitObjectUpdated?.Invoke(h);
+
+            foreach (var b in bookmarkDeletes) BookmarkRemoved?.Invoke(b);
+            foreach (var b in bookmarkInserts) BookmarkAdded?.Invoke(b);
+
+            updateBookmarks();
+        }
+
+        void updateBookmarks()
+        {
+            int[] array = new int[bookmarks.Count];
+            int idx = 0;
+            foreach (var bookmark in bookmarks) {
+                array[idx++] = (int)bookmark.TimePoint;
+            }
+            PlayableBeatmap.BeatmapInfo.Bookmarks = array;
         }
 
         /// <summary>

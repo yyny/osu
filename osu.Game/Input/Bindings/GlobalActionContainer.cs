@@ -72,6 +72,8 @@ namespace osu.Game.Input.Bindings
             new KeyBinding(new[] { InputKey.F3 }, GlobalAction.EditorTimingMode),
             new KeyBinding(new[] { InputKey.F4 }, GlobalAction.EditorSetupMode),
             new KeyBinding(new[] { InputKey.Control, InputKey.Shift, InputKey.A }, GlobalAction.EditorVerifyMode),
+            new KeyBinding(new[] { InputKey.Control, InputKey.B }, GlobalAction.EditorAddBookmark),
+            new KeyBinding(new[] { InputKey.Control, InputKey.Shift, InputKey.B }, GlobalAction.EditorRemoveBookmark),
             new KeyBinding(new[] { InputKey.J }, GlobalAction.EditorNudgeLeft),
             new KeyBinding(new[] { InputKey.K }, GlobalAction.EditorNudgeRight),
         };
@@ -261,5 +263,13 @@ namespace osu.Game.Input.Bindings
 
         [Description("Toggle skin editor")]
         ToggleSkinEditor,
+
+
+        [Description("Add bookmark")]
+        EditorAddBookmark,
+
+        [Description("Remove bookmark")]
+        EditorRemoveBookmark,
+
     }
 }

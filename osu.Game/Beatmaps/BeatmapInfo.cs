@@ -117,6 +117,9 @@ namespace osu.Game.Beatmaps
             }
         }
 
+        /// <summary>
+        /// The list of bookmarks, stored in milliseconds
+        /// </summary>
         [NotMapped]
         public int[] Bookmarks { get; set; } = Array.Empty<int>();
 

@@ -37,6 +37,7 @@ using osu.Game.Screens.Edit.Timing;
 using osu.Game.Screens.Edit.Verify;
 using osu.Game.Screens.Play;
 using osu.Game.Users;
+using osu.Game.Rulesets.Objects;
 using osuTK.Graphics;
 using osuTK.Input;
 
@@ -100,6 +101,11 @@ namespace osu.Game.Screens.Edit
 
         [Resolved]
         private MusicController music { get; set; }
+
+        // The maximum distance in miliseconds to still select the nearest bookmark
+        private const double BOOKMARK_NEARBY_TRESHOLD = 1000.0;
+
+        private EditorMenuItem removeBookmarkMenuItem = null;
 
         [BackgroundDependencyLoader]
         private void load(OsuColour colours, OsuConfigManager config)
@@ -227,6 +233,15 @@ namespace osu.Game.Screens.Edit
                                         new WaveformOpacityMenuItem(config.GetBindable<float>(OsuSetting.EditorWaveformOpacity)),
                                         new HitAnimationsMenuItem(config.GetBindable<bool>(OsuSetting.EditorHitAnimations))
                                     }
+                                },
+                                new MenuItem("Timing")
+                                {
+                                    Items = new MenuItem[]
+                                    {
+                                        new EditorMenuItem("Add Bookmark", MenuItemType.Standard, AddBookmark),
+                                        removeBookmarkMenuItem = new EditorMenuItem("Remove Bookmark", MenuItemType.Standard, RemoveBookmark)
+                                        // TODO(yyny): Bookmark Manager
+                                    }
                                 }
                             }
                         }
@@ -322,10 +337,22 @@ namespace osu.Game.Screens.Edit
             updateLastSavedHash();
         }
 
+        protected void AddBookmark()
+        {
+            editorBeatmap.AddBookmark(new Bookmark(clock.CurrentTime));
+        }
+
+        protected void RemoveBookmark()
+        {
+            editorBeatmap.RemoveNearestBookmark(clock.CurrentTime, BOOKMARK_NEARBY_TRESHOLD);
+        }
+
         protected override void Update()
         {
             base.Update();
             clock.ProcessFrame();
+            if (removeBookmarkMenuItem != null)
+                removeBookmarkMenuItem.Action.Disabled = !editorBeatmap.HasBookmarkNear(clock.CurrentTime, BOOKMARK_NEARBY_TRESHOLD);
         }
 
         public bool OnPressed(PlatformAction action)
@@ -442,6 +469,14 @@ namespace osu.Game.Screens.Edit
 
                 case GlobalAction.EditorVerifyMode:
                     menuBar.Mode.Value = EditorScreenMode.Verify;
+                    return true;
+
+                case GlobalAction.EditorAddBookmark:
+                    AddBookmark();
+                    return true;
+
+                case GlobalAction.EditorRemoveBookmark:
+                    RemoveBookmark();
                     return true;
 
                 default:
