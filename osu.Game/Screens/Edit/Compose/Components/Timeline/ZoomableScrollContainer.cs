@@ -16,6 +16,10 @@ namespace osu.Game.Screens.Edit.Compose.Components.Timeline
 {
     public class ZoomableScrollContainer : OsuScrollContainer
     {
+        private readonly float SLOW_ZOOM_MULTIPLIER = 1.0f;
+        private readonly float NORMAL_ZOOM_MULTIPLIER = 2.0f;
+        private readonly float FAST_ZOOM_MULTIPLIER = 6.0f;
+
         /// <summary>
         /// The time to zoom into/out of a point.
         /// All user scroll input will be overwritten during the zoom transform.
@@ -113,10 +117,18 @@ namespace osu.Game.Screens.Edit.Compose.Components.Timeline
 
         protected override bool OnScroll(ScrollEvent e)
         {
+            float multiplier = NORMAL_ZOOM_MULTIPLIER;
+            if (e.ShiftPressed && !e.ControlPressed)
+                // zoom slower when only holding shift
+                multiplier = FAST_ZOOM_MULTIPLIER;
+            if (e.ControlPressed && !e.ShiftPressed)
+                // zoom slower when only holding control
+                multiplier = SLOW_ZOOM_MULTIPLIER;
+            // if both shift and control are pressed, they "cancel out"
             if (e.AltPressed)
             {
                 // zoom when holding alt.
-                setZoomTarget(zoomTarget + e.ScrollDelta.Y, zoomedContent.ToLocalSpace(e.ScreenSpaceMousePosition).X);
+                setZoomTarget(zoomTarget + e.ScrollDelta.Y * multiplier, zoomedContent.ToLocalSpace(e.ScreenSpaceMousePosition).X);
                 return true;
             }
 
