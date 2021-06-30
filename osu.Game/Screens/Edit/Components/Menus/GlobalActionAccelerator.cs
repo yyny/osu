@@ -10,7 +10,7 @@ namespace osu.Game.Screens.Edit.Components.Menus
     public class GlobalActionAccelerator : Bindable<string>, IAccelerator
     {
         public GlobalActionAccelerator(OsuConfigManager config, GlobalAction action)
-            : base(config.LookupKeyBindings(action))
+            : base(config.LookupKeyBindings != null ? config.LookupKeyBindings(action) : "")
         {
         }
     }
