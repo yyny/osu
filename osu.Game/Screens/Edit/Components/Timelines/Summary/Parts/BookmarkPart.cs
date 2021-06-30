@@ -24,7 +24,7 @@ namespace osu.Game.Screens.Edit.Components.Timelines.Summary.Parts
             visualizations.Clear();
             foreach (int bookmark in beatmap.BeatmapInfo.Bookmarks)
             {
-                Logger.Log($"Bookmark at ${bookmark}ms");
+                Logger.Log($"Bookmark at {bookmark}ms");
             }
             foreach (int bookmark in beatmap.BeatmapInfo.Bookmarks)
             {
