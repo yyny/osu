@@ -3,11 +3,11 @@
 
 using JetBrains.Annotations;
 using osu.Framework.Bindables;
-using osu.Game.Graphics.UserInterface;
+using osu.Game.Screens.Edit.Components.Menus;
 
 namespace osu.Game.Screens.Edit
 {
-    internal class HitAnimationsMenuItem : ToggleMenuItem
+    internal class HitAnimationsMenuItem : ToggleEditorMenuItem
     {
         [UsedImplicitly]
         private readonly Bindable<bool> hitAnimations;

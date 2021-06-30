@@ -16,6 +16,7 @@ using osu.Framework.Input;
 using osu.Framework.Input.Bindings;
 using osu.Framework.Input.Events;
 using osu.Framework.Logging;
+using osu.Framework.Platform;
 using osu.Framework.Screens;
 using osu.Game.Beatmaps;
 using osu.Game.Configuration;
@@ -108,7 +109,7 @@ namespace osu.Game.Screens.Edit
         private EditorMenuItem removeBookmarkMenuItem = null;
 
         [BackgroundDependencyLoader]
-        private void load(OsuColour colours, OsuConfigManager config)
+        private void load(GameHost host, OsuColour colours, OsuConfigManager config)
         {
             var loadableBeatmap = Beatmap.Value;
 
@@ -212,18 +213,18 @@ namespace osu.Game.Screens.Edit
                             {
                                 new MenuItem("File")
                                 {
-                                    Items = createFileMenuItems()
+                                    Items = createFileMenuItems(host, config)
                                 },
                                 new MenuItem("Edit")
                                 {
                                     Items = new[]
                                     {
-                                        undoMenuItem = new EditorMenuItem("Undo", MenuItemType.Standard, Undo),
-                                        redoMenuItem = new EditorMenuItem("Redo", MenuItemType.Standard, Redo),
+                                        undoMenuItem = new EditorMenuItem("Undo", new PlatformActionAccelerator(host, PlatformActionType.Undo), MenuItemType.Standard, Undo),
+                                        redoMenuItem = new EditorMenuItem("Redo", new PlatformActionAccelerator(host, PlatformActionType.Redo), MenuItemType.Standard, Redo),
                                         new EditorMenuItemSpacer(),
-                                        cutMenuItem = new EditorMenuItem("Cut", MenuItemType.Standard, Cut),
-                                        copyMenuItem = new EditorMenuItem("Copy", MenuItemType.Standard, Copy),
-                                        pasteMenuItem = new EditorMenuItem("Paste", MenuItemType.Standard, Paste),
+                                        cutMenuItem = new EditorMenuItem("Cut", new PlatformActionAccelerator(host, PlatformActionType.Cut), MenuItemType.Standard, Cut),
+                                        copyMenuItem = new EditorMenuItem("Copy", new PlatformActionAccelerator(host, PlatformActionType.Copy), MenuItemType.Standard, Copy),
+                                        pasteMenuItem = new EditorMenuItem("Paste", new PlatformActionAccelerator(host, PlatformActionType.Paste), MenuItemType.Standard, Paste),
                                     }
                                 },
                                 new MenuItem("View")
@@ -238,8 +239,8 @@ namespace osu.Game.Screens.Edit
                                 {
                                     Items = new MenuItem[]
                                     {
-                                        new EditorMenuItem("Add Bookmark", MenuItemType.Standard, AddBookmark),
-                                        removeBookmarkMenuItem = new EditorMenuItem("Remove Bookmark", MenuItemType.Standard, RemoveBookmark)
+                                        new EditorMenuItem("Add Bookmark", new GlobalActionAccelerator(config, GlobalAction.EditorAddBookmark), MenuItemType.Standard, AddBookmark),
+                                        removeBookmarkMenuItem = new EditorMenuItem("Remove Bookmark", new GlobalActionAccelerator(config, GlobalAction.EditorRemoveBookmark), MenuItemType.Standard, RemoveBookmark),
                                         // TODO(yyny): Bookmark Manager
                                     }
                                 }
@@ -730,18 +731,18 @@ namespace osu.Game.Screens.Edit
             lastSavedHash = changeHandler.CurrentStateHash;
         }
 
-        private List<MenuItem> createFileMenuItems()
+        private List<MenuItem> createFileMenuItems(GameHost host, OsuConfigManager config)
         {
             var fileMenuItems = new List<MenuItem>
             {
-                new EditorMenuItem("Save", MenuItemType.Standard, Save)
+                new EditorMenuItem("Save", new PlatformActionAccelerator(host, PlatformActionType.Save), MenuItemType.Standard, Save)
             };
 
             if (RuntimeInfo.IsDesktop)
-                fileMenuItems.Add(new EditorMenuItem("Export package", MenuItemType.Standard, exportBeatmap));
+                fileMenuItems.Add(new EditorMenuItem("Export package", null, MenuItemType.Standard, exportBeatmap));
 
             fileMenuItems.Add(new EditorMenuItemSpacer());
-            fileMenuItems.Add(new EditorMenuItem("Exit", MenuItemType.Standard, this.Exit));
+            fileMenuItems.Add(new EditorMenuItem("Exit", new GlobalActionAccelerator(config, GlobalAction.Back), MenuItemType.Standard, this.Exit));
             return fileMenuItems;
         }
 

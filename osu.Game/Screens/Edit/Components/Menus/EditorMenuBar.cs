@@ -7,9 +7,11 @@ using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
+using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.UserInterface;
 using osu.Framework.Input.Events;
 using osu.Game.Graphics;
+using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
 using osuTK;
 using osuTK.Graphics;
@@ -169,12 +171,18 @@ namespace osu.Game.Screens.Edit.Components.Menus
                 {
                     case EditorMenuItemSpacer spacer:
                         return new DrawableSpacer(spacer);
+
+                    case StatefulEditorMenuItem stateful:
+                        return new DrawableStatefulEditorSubMenuItem(stateful, stateful.Accelerator);
+
+                    case EditorMenuItem editorItem:
+                        return new DrawableEditorBarSubMenuItem(editorItem, editorItem.Accelerator);
                 }
 
                 return base.CreateDrawableMenuItem(item);
             }
 
-            private class DrawableSpacer : DrawableOsuMenuItem
+            private class DrawableSpacer : DrawableEditorBarSubMenuItem
             {
                 public DrawableSpacer(MenuItem item)
                     : base(item)
@@ -184,6 +192,136 @@ namespace osu.Game.Screens.Edit.Components.Menus
                 protected override bool OnHover(HoverEvent e) => true;
 
                 protected override bool OnClick(ClickEvent e) => true;
+            }
+
+            public const int MIN_TIP_PADDING = 10;
+            public const int MIN_STATE_ICON_PADDING = 10;
+
+            protected class DrawableEditorBarSubMenuItem : DrawableOsuMenuItem
+            {
+                internal readonly SpriteText tip;
+
+                public DrawableEditorBarSubMenuItem(MenuItem item)
+                    : base(item)
+                {
+                }
+                public DrawableEditorBarSubMenuItem(MenuItem item, IBindable<string> accelerator)
+                    : this(item)
+                {
+                    if (accelerator != null)
+                    {
+                        AddInternal(tip = new OsuSpriteText()
+                        {
+                            Anchor = Anchor.CentreRight,
+                            Origin = Anchor.CentreRight,
+                            Font = OsuFont.GetFont(size: 14),
+                            Margin = new MarginPadding { Horizontal = MARGIN_HORIZONTAL, Vertical = MARGIN_VERTICAL },
+                            Colour = Color4.Gray,
+                        });
+                        accelerator.BindValueChanged(accel => {
+                            tip.Text = accel.NewValue;
+                        }, true);
+                        TextContainer container = (TextContainer)Content;
+                        container.LoadTip(tip);
+                    }
+                }
+
+                protected override DrawableOsuMenuItem.TextContainer CreateTextContainer() =>new TextContainer();
+
+                protected new class TextContainer : DrawableOsuMenuItem.TextContainer
+                {
+                    public TextContainer()
+                        : base()
+                    {
+                    }
+
+                    public virtual void LoadTip(SpriteText tip)
+                    {
+                        tip.Current.BindValueChanged(text =>
+                            {
+                                float extra_width = 0;
+                                if ((text.NewValue?.Length ?? 0) != 0)
+                                    extra_width = tip.DrawWidth + MIN_TIP_PADDING;
+                                NormalText.Margin = new MarginPadding { Left = MARGIN_HORIZONTAL, Right = MARGIN_HORIZONTAL + extra_width, Vertical = MARGIN_VERTICAL };
+                                BoldText.Margin = new MarginPadding { Left = MARGIN_HORIZONTAL, Right = MARGIN_HORIZONTAL + extra_width, Vertical = MARGIN_VERTICAL };
+                            }, true);
+                    }
+                }
+            }
+
+            protected class DrawableStatefulEditorSubMenuItem : DrawableEditorBarSubMenuItem
+            {
+                protected new StatefulEditorMenuItem Item => (StatefulEditorMenuItem)base.Item;
+
+                public DrawableStatefulEditorSubMenuItem(StatefulEditorMenuItem item, IAccelerator accelerator)
+                    : base(item, accelerator)
+                {
+                }
+
+                protected override DrawableOsuMenuItem.TextContainer CreateTextContainer() => new ToggleTextContainer(Item);
+
+                private class ToggleTextContainer : TextContainer
+                {
+                    private readonly StatefulEditorMenuItem menuItem;
+                    private readonly Bindable<object> state;
+                    private readonly SpriteIcon stateIcon;
+
+                    public ToggleTextContainer(StatefulEditorMenuItem menuItem)
+                        : base()
+                    {
+                        this.menuItem = menuItem;
+
+                        state = menuItem.State.GetBoundCopy();
+
+                        Add(stateIcon = new SpriteIcon
+                        {
+                            Anchor = Anchor.CentreLeft,
+                            Origin = Anchor.CentreLeft,
+                            Size = new Vector2(10),
+                            Margin = new MarginPadding { Horizontal = MARGIN_HORIZONTAL },
+                            AlwaysPresent = true,
+                        });
+                    }
+
+                    protected override void LoadComplete()
+                    {
+                        base.LoadComplete();
+                        state.BindValueChanged(updateState, true);
+                    }
+
+                    protected override void Update()
+                    {
+                        base.Update();
+
+                        // Todo: This is bad. This can maybe be done better with a refactor of DrawableOsuMenuItem.
+                        stateIcon.X = BoldText.DrawWidth + MIN_STATE_ICON_PADDING;
+                    }
+
+                    private void updateState(ValueChangedEvent<object> state)
+                    {
+                        var icon = menuItem.GetIconForState(state.NewValue);
+
+                        if (icon == null)
+                            stateIcon.Alpha = 0;
+                        else
+                        {
+                            stateIcon.Alpha = 1;
+                            stateIcon.Icon = icon.Value;
+                        }
+                    }
+
+                    public override void LoadTip(SpriteText tip)
+                    {
+                        tip.Current.BindValueChanged(text =>
+                            {
+                                float extra_width = stateIcon.DrawWidth + MIN_STATE_ICON_PADDING;
+                                if ((text.NewValue?.Length ?? 0) != 0)
+                                    extra_width += tip.DrawWidth + MIN_TIP_PADDING;
+                                NormalText.Margin = new MarginPadding { Left = MARGIN_HORIZONTAL, Right = MARGIN_HORIZONTAL + extra_width, Vertical = MARGIN_VERTICAL };
+                                BoldText.Margin = new MarginPadding { Left = MARGIN_HORIZONTAL, Right = MARGIN_HORIZONTAL + extra_width, Vertical = MARGIN_VERTICAL };
+                            }, true);
+                    }
+                }
             }
         }
     }

@@ -9,15 +9,18 @@ namespace osu.Game.Screens.Edit.Components.Menus
     public class EditorMenuItem : OsuMenuItem
     {
         private const int min_text_length = 40;
+        public IAccelerator Accelerator;
 
-        public EditorMenuItem(string text, MenuItemType type = MenuItemType.Standard)
+        public EditorMenuItem(string text, IAccelerator accelerator = null, MenuItemType type = MenuItemType.Standard)
             : base(text.PadRight(min_text_length), type)
         {
+            Accelerator = accelerator;
         }
 
-        public EditorMenuItem(string text, MenuItemType type, Action action)
+        public EditorMenuItem(string text, IAccelerator accelerator, MenuItemType type, Action action)
             : base(text.PadRight(min_text_length), type, action)
         {
+            Accelerator = accelerator;
         }
     }
 }

@@ -3,12 +3,12 @@
 
 using System.Collections.Generic;
 using osu.Framework.Bindables;
-using osu.Framework.Graphics.UserInterface;
 using osu.Game.Graphics.UserInterface;
+using osu.Game.Screens.Edit.Components.Menus;
 
 namespace osu.Game.Screens.Edit
 {
-    internal class WaveformOpacityMenuItem : MenuItem
+    internal class WaveformOpacityMenuItem : EditorMenuItem
     {
         private readonly Bindable<float> waveformOpacity;
 
