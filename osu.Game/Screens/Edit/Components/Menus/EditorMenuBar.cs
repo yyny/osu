@@ -205,7 +205,7 @@ namespace osu.Game.Screens.Edit.Components.Menus
                     : base(item)
                 {
                 }
-                public DrawableEditorBarSubMenuItem(MenuItem item, IBindable<string> accelerator)
+                public DrawableEditorBarSubMenuItem(MenuItem item, IAccelerator accelerator)
                     : this(item)
                 {
                     if (accelerator != null)
@@ -218,9 +218,7 @@ namespace osu.Game.Screens.Edit.Components.Menus
                             Margin = new MarginPadding { Horizontal = MARGIN_HORIZONTAL, Vertical = MARGIN_VERTICAL },
                             Colour = Color4.Gray,
                         });
-                        accelerator.BindValueChanged(accel => {
-                            tip.Text = accel.NewValue;
-                        }, true);
+                        tip.Text = accelerator.Representation;
                         TextContainer container = (TextContainer)Content;
                         container.LoadTip(tip);
                     }

@@ -5,7 +5,8 @@ using osu.Framework.Bindables;
 
 namespace osu.Game.Screens.Edit.Components.Menus
 {
-    public interface IAccelerator : IBindable<string>
+    public interface IAccelerator
     {
+        string Representation { get; }
     }
 }

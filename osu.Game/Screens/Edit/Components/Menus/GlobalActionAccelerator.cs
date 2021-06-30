@@ -2,16 +2,17 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using osu.Game.Configuration;
-using osu.Framework.Bindables;
 using osu.Game.Input.Bindings;
 
 namespace osu.Game.Screens.Edit.Components.Menus
 {
-    public class GlobalActionAccelerator : Bindable<string>, IAccelerator
+    public class GlobalActionAccelerator : IAccelerator
     {
+        public string Representation { get; private set; }
+
         public GlobalActionAccelerator(OsuConfigManager config, GlobalAction action)
-            : base(config.LookupKeyBindings != null ? config.LookupKeyBindings(action) : "")
         {
+            Representation = config.LookupKeyBindings != null ? config.LookupKeyBindings(action) : "";
         }
     }
 }

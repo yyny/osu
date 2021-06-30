@@ -7,11 +7,13 @@ using osu.Framework.Input;
 
 namespace osu.Game.Screens.Edit.Components.Menus
 {
-    public class PlatformActionAccelerator : ConstBindable<string>, IAccelerator
+    public class PlatformActionAccelerator : IAccelerator
     {
+        public string Representation { get; private set; }
+
         public PlatformActionAccelerator(GameHost host, PlatformActionType action)
-            : base(PlatformActionAcceleratorString(host, action))
         {
+            Representation = PlatformActionAcceleratorString(host, action);
         }
 
         public static string PlatformActionAcceleratorString(GameHost host, PlatformActionType actionType)
